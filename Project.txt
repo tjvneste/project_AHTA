@@ -1,0 +1,19 @@
+Project Applied High-throughput Analysis
+
+=> analyze omics data
+=> find 4 publicly available omics datasets that are somehow related. 
+
+For example: you can evaluate whether expression differences observed in cancer may be attributed to either epigenetic or genetic differences: 
+side note: the four datasets should be obtained by a t least thgree different omics technologies, including MICROARRAY AND ONE SEQUENCING BASED METHOD. For example: qPCR, 2types of microarrays and RNA-seq is good.
+
+MAKING THE REPORT: 
+two parts=> general information (generally understandable for biologist + code and commands, packages and supplementary figures and tables.  
+Essentially, part a) shoudl contain what you've done and why, wereas part b) should demonstrate how you did everything and include the supplements. 
+=> ref are needed
+
+one method per dataset is sufficient! 
+
+mogelijkse datasets:
+Breast cancer RNA-seq	https://www.omicsdi.org/dataset/arrayexpress-repository/E-GEOD-58135
+methylation in breast cancer vs normal tissue https://www.omicsdi.org/dataset/arrayexpress-repository/E-GEOD-35263
+Expression data from breast cancer tissues and adjacent normal tissues https://www.omicsdi.org/dataset/omics_ena_project/PRJNA429856

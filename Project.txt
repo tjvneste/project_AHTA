@@ -17,6 +17,12 @@ one method per dataset is sufficient!
 
 Datasets: 
 
+
+E-GEOD-15852 - Transcription profiling of human breast tumors and their paired normal tissues
+https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-15852/?query=Affymetrix+breast+cancer+vs+control
+(almost done)
+
+
 E-MTAB-223 - ChIP-Seq of human breast cancer cell lines with antibodies FOXA1, ER and CTCF
 https://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-223/?fbclid=IwAR2N4wkQV2f8PKkMI_mr_u7b4EWRO29s0uR0Cz4GaAn-LGnmK1GlrJ3vvmI
 
@@ -25,6 +31,3 @@ https://www.omicsdi.org/dataset/arrayexpress-repository/E-GEOD-58135
 
 -methylation in breast cancer vs normal tissue 
 https://www.omicsdi.org/dataset/arrayexpress-repository/E-GEOD-35263
-
-E-GEOD-15852 - Transcription profiling of human breast tumors and their paired normal tissues
-https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-15852/?query=Affymetrix+breast+cancer+vs+control

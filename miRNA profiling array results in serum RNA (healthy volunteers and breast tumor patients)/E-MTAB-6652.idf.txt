@@ -1,0 +1,34 @@
+Comment[ArrayExpressAccession]	E-MTAB-6652
+MAGE-TAB Version	1.1
+Comment[Submitted Name]	miRNA profiling array results in serum RNA (healthy volunteers and breast tumor patients)				
+Investigation Title	miRNA profiling array results in serum RNA (healthy volunteers and breast tumor patients)
+Experiment Description	To identify serum miRNAs as biomarkers for breast cancer, RNA from 7 serum pools (healthy volunteers: n=100, benign patients: n=100，cancer patients: n=94, Lymph nodes positive: n=36, lymph nodes negative: n=58, carcinoma in situ: n=25, infiltrating carcinoma: n=69) were screened by Affymetrix microarray 4.0.
+Experimental Design	case control design
+Experimental Design Term Source REF	EFO
+Experimental Design Term Accession Number	EFO:0001427
+Experimental Factor Name	disease	clinical information
+Experimental Factor Type	disease	clinical information
+Experimental Factor Term Source REF	EFO
+Experimental Factor Term Accession Number	EFO_0000408
+Person Last Name	Guo
+Person First Name	Jian
+Person Mid Initials
+Person Email	495468905@qq.com
+Person Phone
+Person Fax
+Person Address	Beijing 100005, China.
+Person Affiliation	Institute of Basic Medical Sciences Chinese Academy of Medical Sciences, School of Basic Medicine Peking Union Medical College
+Person Roles	submitter
+Public Release Date	2018-07-30
+Protocol Name	P-MTAB-73057	P-MTAB-73058	P-MTAB-73059	P-MTAB-73060	P-MTAB-73061
+Protocol Type	sample collection protocol	nucleic acid extraction protocol	nucleic acid labeling protocol	nucleic acid hybridization to array protocol	array scanning and feature extraction protocol
+Protocol Term Source REF	EFO	EFO	EFO	EFO	EFO
+Protocol Term Accession Number	EFO_0005518	EFO_0002944	EFO_0003813	EFO_0003815	EFO_0003814
+Protocol Description	The study population consisted of 94 breast cancer patients (mean age, 48 years; range, 28-86 years) and 100 patients with benign tumor (mean age, 39.8 years; range, 19-66 years) who didn’t receive any direct or specific treatment after being enrolled in the study. The control population included 100 healthy volunteers. Controls were matched to the patients based on age, gender and ethnicity. All the donors were female adults. The patients were all newly diagnosed and had not received any treatment for cancer prior to blood collection. The breast cancer patients were subdivided into two groups in two ways: one was lymph nodes metastasis (n=36) or non-metastasis (n=58), and the other was carcinoma in situ (n=25) or infiltrating carcinoma (n=69).The molecular subtypes of patients were assessed by pathological report.Venous blood samples(5ml) were collected from each patient and healthy volunteer in procoagulant drying tubes. The whole blood was centrifuged at 800 g for 10 min at 4°C to remove cells and at 5 000 g for 30 min at 4°C to remove cell debris. Serum was aliquoted and stored at -80°C until used. 	Total RNA was isolated from serum by acid-phenol, chloroform and acidic sodium, and the precipitation was carried out by ethanol.	According to the protocol of FlashTag Biotin RNA Labeling Kit for Affymetrix GeneChip miRNA Arrays.	According to the protocol of Affymetrix GeneChip miRNA 4.0.	According to the protocol of Affymetrix® GeneChip® Command Console® Software.
+Protocol Hardware
+Protocol Software
+Term Source Name	ArrayExpress	EFO
+Term Source File	http://www.ebi.ac.uk/arrayexpress/	http://www.ebi.ac.uk/efo/
+Term Source Version
+Comment[AEExperimentType]	microRNA profiling by array
+SDRF File	E-MTAB-6652.sdrf.txt

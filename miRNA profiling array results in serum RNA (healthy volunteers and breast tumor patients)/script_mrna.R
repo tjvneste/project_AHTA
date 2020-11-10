@@ -5,6 +5,7 @@ library(arrayQualityMetrics)
 library(ArrayExpress)
 library(limma)
 library(siggenes)
+library(oligo)
 ## Import Data
 ####################
 
@@ -16,16 +17,16 @@ library(siggenes)
 ## Download data to your working directory
 getAE("E-MTAB-6652")
 
-
-library(oligo)
 dat <- read.celfiles(list.celfiles())
 dat
 
+BreastCancer_miRNA <- ReadAffy(phenoData=pData(dat)) 
+
 # exprs functions returns the intensity values for each sample (column)
 exprs(dat)
+dim(exprs(dat))
 #pData returns the phenotypic data we loaded using ReadAffy
 pData(dat)
-exprs(dat)
 
 ## Quality Control on raw data
 ####################
@@ -38,37 +39,38 @@ arrayQualityMetrics(dat,outdir="/Users/tristanvanneste/Documents/Bioinformatics/
 # rma function is used to perform background correction as well as quantile normalization 
 BreastCancer_miRNA <- rma(dat)
 BreastCancer_miRNA
-limma::plotDensities(exprs(BreastCancerRMA))
+limma::plotDensities(exprs(BreastCancer_miRNA))
 ## Quality Control on preprocessed data
 ## QC post preprocessing
-arrayQualityMetrics(BreastCancerRMA,outdir="/Users/tristanvanneste/Documents/Bioinformatics/project Tristan/RMA",force=T)  			#RMA produces log-transformed data
+arrayQualityMetrics(BreastCancer_miRNA,outdir="/Users/tristanvanneste/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/miRNA profiling array results in serum RNA (healthy volunteers and breast tumor patients)/miRNA",force=T)  			#RMA produces log-transformed data
 
 # now can perform SAM or LIMMA to get the differentially expressed genes
 #SAM
-head(pData(BreastCancerRMA))
-annot <- factor(pData(BreastCancerRMA)[,7]) # normal breast tissue and breast tumor tissue
+pData(BreastCancer_miRNA)
+exprs(BreastCancer_miRNA)
+annot <- factor(pData(BreastCancer_miRNA)) # normal breast tissue and breast tumor tissue
 length(annot) # 86
 
 ## Differential expression by SAM
 annotb <- as.double(annot==annot[4]) # we want the breast tumor tissue to be one and the control to be zero 
-sam.out_RMA <- sam(exprs(BreastCancerRMA),annotb)
+sam.out_RMA <- sam(exprs(BreastCancer_miRNA),annotb)
 summary(sam.out_RMA,3.1) # depends on you stringent you want to be 
 # 559 identified genes with 0.03 falsely called genes or FDR of  2.95e-05
 summary(sam.out_RMA,3.8)
 # 273 identified genes with 0 FDR and 0 falsely called genes 
 # the problem is we don't account for the persons 
-pData(BreastCancerRMA)$Patients<- pData(BreastCancerRMA)$Hybridization.Name
-pData(BreastCancerRMA)$Patients <- gsub('Normal', '',pData(BreastCancerRMA)$Patients)
-pData(BreastCancerRMA)$Patients <- gsub('Cancer', '',pData(BreastCancerRMA)$Patients)
-pData(BreastCancerRMA)$Patients <- gsub('T', '',pData(BreastCancerRMA)$Patients)
-pData(BreastCancerRMA)$Patients <- gsub('N', '',pData(BreastCancerRMA)$Patients)
-pData(BreastCancerRMA)$Patients <- gsub(' ', '',pData(BreastCancerRMA)$Patients)
-pData(BreastCancerRMA)$Patients # this is column with patients every patient has to occur 2 times in this column 
-sum(grepl('BC0155', pData(BreastCancerRMA)$Patients))
-sum(grepl('BC0117', pData(BreastCancerRMA)$Patients))
+pData(BreastCancer_miRNA)$Patients<- pData(BreastCancer_miRNA)$Hybridization.Name
+pData(BreastCancer_miRNA)$Patients <- gsub('Normal', '',pData(BreastCancer_miRNA)$Patients)
+pData(BreastCancer_miRNA)$Patients <- gsub('Cancer', '',pData(BreastCancer_miRNA)$Patients)
+pData(BreastCancer_miRNA)$Patients <- gsub('T', '',pData(BreastCancer_miRNA)$Patients)
+pData(BreastCancer_miRNA)$Patients <- gsub('N', '',pData(BreastCancer_miRNA)$Patients)
+pData(BreastCancer_miRNA)$Patients <- gsub(' ', '',pData(BreastCancer_miRNA)$Patients)
+pData(BreastCancer_miRNA)$Patients # this is column with patients every patient has to occur 2 times in this column 
+sum(grepl('BC0155', pData(BreastCancer_miRNA)$Patients))
+sum(grepl('BC0117', pData(BreastCancer_miRNA)$Patients))
 # zal wel kloppen
 
-ID <- factor(pData(BreastCancerRMA)$Patients)
+ID <- factor(pData(BreastCancer_miRNA)$Patients)
 # vragen of we dit in ons model moeten opnemen wnt we missen dan wel veel vrijheidsgraden
 
 
@@ -77,19 +79,19 @@ ID <- factor(pData(BreastCancerRMA)$Patients)
 design <- model.matrix(~0+annot)
 colnames(design)<-c("Cancer_breast_tissue","normal_breast_tissue")
 
-fit <- lmFit(BreastCancerRMA,design)
+fit <- lmFit(BreastCancer_miRNA,design)
 cont.matrix <- makeContrasts(NvsS=Cancer_breast_tissue-normal_breast_tissue,levels=design)
 fit2 <- contrasts.fit(fit,cont.matrix) 
 fit2 <- eBayes(fit2)
 volcanoplot(fit2)
 limma::plotMA(fit2)
-LIMMAout <- topTable(fit2,adjust="BH",number=nrow(exprs(BreastCancerRMA)))
+LIMMAout <- topTable(fit2,adjust="BH",number=nrow(exprs(BreastCancer_miRNA)))
 head(LIMMAout)
 # To understand how this limma workflow works have a look at the bioconductor manual, the workflow with an 
 # example is provided there
 # Alternative (also applicable for more complex models)
 design <- model.matrix(~annot)
-fit <- lmFit(BreastCancerRMA,design)
+fit <- lmFit(BreastCancer_miRNA,design)
 fit2 <- eBayes(fit2)
 LIMMAout <- topTable(fit2,adjust="BH",number=nrow(exprs(MouseRMA)))
 head(LIMMAout) 
@@ -97,9 +99,9 @@ head(LIMMAout)
 # dit zijn dezelfde top genes als bij SAM!
 
 ## Check intensity values for top results
-exprs(BreastCancerRMA)[rownames(exprs(BreastCancerRMA))%in%rownames(head(LIMMAout)),]
-rowMeans(exprs(BreastCancerRMA)[rownames(exprs(BreastCancerRMA))%in%rownames(head(LIMMAout)),c(1,6,7)])
-rowMeans(exprs(BreastCancerRMA)[rownames(exprs(BreastCancerRMA))%in%rownames(head(LIMMAout)),2:5])
+exprs(BreastCancer_miRNA)[rownames(exprs(BreastCancer_miRNA))%in%rownames(head(LIMMAout)),]
+rowMeans(exprs(BreastCancer_miRNA)[rownames(exprs(BreastCancer_miRNA))%in%rownames(head(LIMMAout)),c(1,6,7)])
+rowMeans(exprs(BreastCancer_miRNA)[rownames(exprs(BreastCancer_miRNA))%in%rownames(head(LIMMAout)),2:5])
 # note that the probesets are not necessarly in the same order as for the limma output
 
 ## Optional: Differential expression analysis with MAS preprocessed data

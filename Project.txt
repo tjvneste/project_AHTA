@@ -35,4 +35,5 @@ E-GEOD-29119 - Gene expression analysis of breast cancer (HCC1954) and normal br
 E-GEOD-22250 - Epigenetic portraits of human breast cancers (various cell lines expression data)
 https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-22250/?query=affymetrix+breast+cancer+methylation&page=2&pagesize=25
 
-
+Genome-wide DNA methylation pattern changes in basal-like breast cancer patients
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE101443

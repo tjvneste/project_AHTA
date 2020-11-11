@@ -1,10 +1,7 @@
-setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/methylation")
+setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/methylation/GSE101443_RAW")
 
 
 library(ArrayExpress)
 
-## Download data to your working directory
-getAE("E-GEOD-66695")
+infdata <- readEPIC(getwd())
 
-methylation <- ArrayExpress("E-GEOD-66695")
-methylation <- BreastCancer

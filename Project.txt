@@ -29,5 +29,11 @@ https://www.ebi.ac.uk/arrayexpress/experiments/E-MTAB-223/?fbclid=IwAR2N4wkQV2f8
 -Breast cancer RNA-seq	
 https://www.omicsdi.org/dataset/arrayexpress-repository/E-GEOD-58135
 
--methylation in breast cancer vs normal tissue 
-https://www.omicsdi.org/dataset/arrayexpress-repository/E-GEOD-35263
+-mRNA-Seq of polyA-selected RNA from breast cancer HCC1954 and normal breast HMEC. 36 cycles of sequencing on Illumina platform
+E-GEOD-29119 - Gene expression analysis of breast cancer (HCC1954) and normal breast cells (HMEC)
+
+E-GEOD-22250 - Epigenetic portraits of human breast cancers (various cell lines expression data)
+https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-22250/?query=affymetrix+breast+cancer+methylation&page=2&pagesize=25
+
+Genome-wide DNA methylation pattern changes in basal-like breast cancer patients
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE101443

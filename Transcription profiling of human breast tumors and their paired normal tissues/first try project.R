@@ -1,11 +1,6 @@
-setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA")
-
+setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/Transcription profiling of human breast tumors and their paired normal tissues")
+#https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-15852/
 BiocManager::install("affy",update=F)
-BiocManager::install("arrayQualityMetrics",update=F)
-BiocManager::install("ArrayExpress",update=F)
-BiocManager::install("limma",update=F)
-BiocManager::install("siggenes",update=F)
-
 ## Load packages
 library(affy)
 library(arrayQualityMetrics)
@@ -30,7 +25,6 @@ BreastCancer
 
 # exprs functions returns the intensity values for each sample (column)
 exprs(BreastCancer)
-limma::plotDensities(exprs(BreastCancer)) # check this further 
 
 ## Reads in all .cel files and takes phenoData from the ExpressionFeatureset we loaded using https_ArrayExpress
 BreastCancer <- ReadAffy(phenoData=pData(BreastCancer)) 
@@ -57,16 +51,21 @@ arrayQualityMetrics(BreastCancerRMA,outdir="/Users/tristanvanneste/Documents/Bio
 #SAM
 head(pData(BreastCancerRMA))
 annot <- factor(pData(BreastCancerRMA)[,7]) # normal breast tissue and breast tumor tissue
+annot
 length(annot) # 86
 
 ## Differential expression by SAM
 annotb <- as.double(annot==annot[4]) # we want the breast tumor tissue to be one and the control to be zero 
+annotb
 sam.out_RMA <- sam(exprs(BreastCancerRMA),annotb)
+sam.out_RMA # check this with Louis => welke threshold is normaal? 
+
 summary(sam.out_RMA,3.1) # depends on you stringent you want to be 
 # 559 identified genes with 0.03 falsely called genes or FDR of  2.95e-05
 summary(sam.out_RMA,3.8)
 # 273 identified genes with 0 FDR and 0 falsely called genes 
-# the problem is we don't account for the persons 
+# the problem is we don't account for the persons but can we? bcs we have 86 samples? 
+
 pData(BreastCancerRMA)$Patients<- pData(BreastCancerRMA)$Hybridization.Name
 pData(BreastCancerRMA)$Patients <- gsub('Normal', '',pData(BreastCancerRMA)$Patients)
 pData(BreastCancerRMA)$Patients <- gsub('Cancer', '',pData(BreastCancerRMA)$Patients)
@@ -76,11 +75,10 @@ pData(BreastCancerRMA)$Patients <- gsub(' ', '',pData(BreastCancerRMA)$Patients)
 pData(BreastCancerRMA)$Patients # this is column with patients every patient has to occur 2 times in this column 
 sum(grepl('BC0155', pData(BreastCancerRMA)$Patients))
 sum(grepl('BC0117', pData(BreastCancerRMA)$Patients))
-# zal wel kloppen
 
 ID <- factor(pData(BreastCancerRMA)$Patients)
 # vragen of we dit in ons model moeten opnemen wnt we missen dan wel veel vrijheidsgraden
-
+ID
 
 ## Differential expression by LIMMA
 # Method as stated in limma package (no intercept, easy for simple model designs)
@@ -95,16 +93,8 @@ volcanoplot(fit2)
 limma::plotMA(fit2)
 LIMMAout <- topTable(fit2,adjust="BH",number=nrow(exprs(BreastCancerRMA)))
 head(LIMMAout)
-# To understand how this limma workflow works have a look at the bioconductor manual, the workflow with an 
-# example is provided there
-# Alternative (also applicable for more complex models)
-design <- model.matrix(~annot)
-fit <- lmFit(BreastCancerRMA,design)
-fit2 <- eBayes(fit2)
-LIMMAout <- topTable(fit2,adjust="BH",number=nrow(exprs(MouseRMA)))
-head(LIMMAout) 
 
-# dit zijn dezelfde top genes als bij SAM!
+# dit zijn dezelfde top arrays als bij SAM!
 
 ## Check intensity values for top results
 exprs(BreastCancerRMA)[rownames(exprs(BreastCancerRMA))%in%rownames(head(LIMMAout)),]
@@ -138,5 +128,4 @@ LIMMAout_annot <- LIMMAout_sorted[sort(LIMMAout_sorted$adj.P.Val,index.return=T)
 
 # Have a look at the results and search for other probesets for your DE genes
 head(LIMMAout_annot)
-sum(table(l*)) # no idea what this is for? 
 LIMMAout_annot[LIMMAout_annot$gene=="ENSG00000119888",]

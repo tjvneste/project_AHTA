@@ -1,5 +1,5 @@
 setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/methylation/GSE101443_RAW")
-
+#https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE101443
 ## Load packages
 library('lumi')
 library('wateRmelon')
@@ -128,7 +128,7 @@ LIMMAout_sorted$Feature <- as.character(LIMMAout_sorted$Feature)
 # The data type for these columns is altered to prevent issues further downstream
 LIMMAout_annot <- LIMMAout_sorted[sort(LIMMAout_sorted$P.Value,index.return=T)$ix,c(1,12,13,10,11,4,7,8,5)] 
 # Sort on p-values to prevent errors in sorting due to equal FDR values
-
+LIMMAout_annot
 
 ## Interpretation results
 ############################

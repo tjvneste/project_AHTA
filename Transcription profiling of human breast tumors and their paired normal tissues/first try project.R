@@ -59,6 +59,7 @@ annotb <- as.double(annot==annot[4]) # we want the breast tumor tissue to be one
 annotb
 sam.out_RMA <- sam(exprs(BreastCancerRMA),annotb)
 sam.out_RMA # check this with Louis => welke threshold is normaal? 
+# threshold FDR 0.05
 
 summary(sam.out_RMA,3.1) # depends on you stringent you want to be 
 # 559 identified genes with 0.03 falsely called genes or FDR of  2.95e-05
@@ -77,12 +78,13 @@ sum(grepl('BC0155', pData(BreastCancerRMA)$Patients))
 sum(grepl('BC0117', pData(BreastCancerRMA)$Patients))
 
 ID <- factor(pData(BreastCancerRMA)$Patients)
-# vragen of we dit in ons model moeten opnemen wnt we missen dan wel veel vrijheidsgraden
+# vragen of we dit in ons model moeten opnemen wnt we missen dan wel veel vrijheidsgraden => ja
 ID
 
 ## Differential expression by LIMMA
 # Method as stated in limma package (no intercept, easy for simple model designs)
-design <- model.matrix(~0+annot)
+design <- model.matrix(~0+annot)#+patients
+#patients toevoegen
 colnames(design)<-c("Cancer_breast_tissue","normal_breast_tissue")
 
 fit <- lmFit(BreastCancerRMA,design)
@@ -91,7 +93,7 @@ fit2 <- contrasts.fit(fit,cont.matrix)
 fit2 <- eBayes(fit2)
 volcanoplot(fit2)
 limma::plotMA(fit2)
-LIMMAout <- topTable(fit2,adjust="BH",number=nrow(exprs(BreastCancerRMA)))
+LIMMAout <- topTable(fit2,adjust="BH",number=nrow(exprs(BreastCancerRMA))) 
 head(LIMMAout)
 
 # dit zijn dezelfde top arrays als bij SAM!
@@ -109,8 +111,11 @@ rowMeans(exprs(BreastCancerRMA)[rownames(exprs(BreastCancerRMA))%in%rownames(hea
 
 ## Load annotation and sort alphabetically on probe name
 annotation_BC <- read.table("A-AFFY-33.adf.txt",header=T,sep="\t",skip=17,fill=T)
-print(head(annotation_BC))
+print(tail(annotation_BC))
+annotation_BC[100:105,]
 annotation_BC <- annotation_BC[sort(annotation_BC$Composite.Element.Name,index.return=T)$ix,]
+#biomart
+#
 
 ## Check if all probes are present in both sets
 dim(annotation_BC)

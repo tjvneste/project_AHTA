@@ -1,8 +1,11 @@
 setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/methylation/GSE101443_RAW")
 #https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE101443
+#laptop 
+setwd("~/documenten/Documenten/Ugent/applied high-throughput analysis/project_AHTA/methylation/GSE101443_RAW")
 ## Load packages
 library('lumi')
 library('wateRmelon')
+BiocManager::install("ChAMPdata",update=F)
 library('ChAMPdata')
 
 

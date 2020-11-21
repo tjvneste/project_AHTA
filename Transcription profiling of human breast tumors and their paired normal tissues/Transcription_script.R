@@ -1,6 +1,8 @@
 #Transcription profiling of human breast tumors and their paired normal tissues
 
 setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/Transcription profiling of human breast tumors and their paired normal tissues")
+# laptop 
+setwd("~/documenten/Documenten/Ugent/applied high-throughput analysis/project_AHTA/Transcription profiling of human breast tumors and their paired normal tissues")
 #https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-15852/
 BiocManager::install("affy",update=F)
 ## Load packages
@@ -56,7 +58,6 @@ annot <- factor(pData(BreastCancerRMA)[,7]) # normal breast tissue and breast tu
 annot
 length(annot) # 86
 
-## Differential expression by SAM
 annotb <- as.double(annot==annot[4]) # we want the breast tumor tissue to be one and the control to be zero 
 annotb
 # the problem is we don't account for the persons but can we? bcs we have 86 samples? YES

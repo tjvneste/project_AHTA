@@ -1,27 +1,32 @@
 #Transcription profiling of human breast tumors and their paired normal tissues
-
+#desktop
 setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/Transcription profiling of human breast tumors and their paired normal tissues")
 # laptop 
-setwd("~/documenten/Documenten/Ugent/applied high-throughput analysis/project_AHTA/Transcription profiling of human breast tumors and their paired normal tissues")
+#setwd("~/documenten/Documenten/Ugent/applied high-throughput analysis/project_AHTA/Transcription profiling of human breast tumors and their paired normal tissues")
 #https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-15852/
-BiocManager::install("affy",update=F)
+
+"BACKGROUND
+Microarray is widely used to monitor gene expression changes in breast cancer. The transcriptomic changes in breast cancer is commonly occured during the transition of normal cells to cancerous cells. 
+This is the first study on gene expression profiling of multi ethnic of Malaysian breast cancer patients (Malays, Chinese and Indian). 
+We aim to identify differentially expressed genes between tumors and normal tissues. We have identified a set of 33 significant differentially expressed genes in the tumor vs. normal group at p<0.001. 
+We study the gene expression patterns of 43 breast tumors and their paired normal control by using Affymetrix genechip U133A. 
+We have identified a set of 33 significant differentially expressed genes in the tumor vs. normal group at p<0.001. Experiment Overall Design: Total RNAs were extracted from breast cancer and normal tissues. 
+Samples were processed and hybridized on the chip for 16 hours. 
+At the end of the study, we obtained a total of 86 set of gene expression data, which were from 43 tumors and 43 normal tissues. The gene expression were then compared between the tumor and normal groups.
+"
+
 ## Load packages
 library(affy)
 library(arrayQualityMetrics)
 library(ArrayExpress)
 library(limma)
 library(siggenes)
-library(ggplot2)
 library(biomaRt)
 
 ## Import Data
 ####################
 
 ## Load in the data 
-# If this dataset is an AffyBatch object you can proceed with the Quality control on the raw data. If this 
-# is an ExpressionFeatureSet instead continue to get the right object. We need an Affybatch object to secure
-# compatibility with other packages used.
-
 ## Download data to your working directory
 getAE("E-GEOD-15852", type = 'raw')
 

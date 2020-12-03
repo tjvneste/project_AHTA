@@ -2,10 +2,10 @@ setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/
 #https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE101443
 #laptop 
 setwd("~/documenten/Documenten/Ugent/applied high-throughput analysis/project_AHTA/methylation/GSE101443_RAW")
+
 ## Load packages
 library('lumi')
 library('wateRmelon')
-BiocManager::install("ChAMPdata",update=F)
 library('ChAMPdata')
 
 
@@ -32,7 +32,8 @@ methyldata <- methyldata[!(rowSums(is.na(exprs(methyldata)))>=1),]
 methyldata
 
 ## Remove probes for which calling p-value is insufficient
-methyldata.pf<-pfilter(methyldata) 
+methyldata.pf<-pfilter(methyldata) # removes the probes which we are not sure that are called correctly
+#1408 probes were removed 
 
 ## Comparison of average methylation between control and tumor samples
 boxplot(betas(methyldata),las=2)
@@ -51,8 +52,8 @@ meth_mean_control <- meth_mean_control[c(2,4,6,8)]
 t_test_res <- t.test(meth_mean_control,meth_mean_tumour,var.equal=F)
 t_test_res
 
-dat_boxplot <- data.frame(betas = c(meth_mean_control,meth_mean_control),
-                          group = c('Tumour','Normal','Tumour','Normal','Tumour','Normal','Tumour','Normal'))
+dat_boxplot <- data.frame(betas = c(meth_mean_tumour,meth_mean_control),
+                          group = c('Tumour','Tumour','Tumour','Tumour','Normal','Normal','Normal','Normal'))
 boxplot(betas~group,dat_boxplot,las=2)
 
 ## Normalization & QC
@@ -68,73 +69,64 @@ methyldataM <- as(methyldata.pf, 'MethyLumiM')
 methyldataN <- as(methyldata.dasen.pf, 'MethyLumiM')
 
 ## Make QC plot
-par(mfrow=c(2,2))
-plotColorBias1D(methyldataM,channel="both",main="before")
-plotColorBias1D(methyldataN,channel="both",main="after")
+par(mfrow=c(2,1))
+plotColorBias1D(methyldataM,channel="both",main="before",xlab="Beta-value")
+plotColorBias1D(methyldataN,channel="both",main="after",xlab="Beta-value")
 density(methyldataM,xlab="M-value",main="before")
 density(methyldataN,xlab="M-value",main="after")
 
 ## Differential methylation analysis: limma
 ############################
-
+par(mfrow=c(1,1))
 ## Build design and contrasts
 condition <- factor(as.character(c('Tumour','Normal','Tumour','Normal','Tumour','Normal','Tumour','Normal')))
 patient <- factor(annotation$Patient)
-design <- model.matrix(~0+condition)
-colnames(design)[1:2] <- c("Control","Tumor")
-cont.matrix <- makeContrasts(NvsS=Tumor-Control,levels=design)
 
-## Limma
-fit <- lmFit(methyldataN,design) # normalized data
-fit2 <- contrasts.fit(fit,cont.matrix)
-fit2 <- eBayes(fit2)
-volcanoplot(fit2)
-limma::plotMA(fit2)
-LIMMAout <- topTable(fit2,adjust="BH",number=nrow(exprs(methyldata)))
-head(LIMMAout)
-
-# nu met Patient erbij 
 design2 <- model.matrix(~0+condition+patient)
 colnames(design2)[1:2] <- c("Control","Tumor")
-cont.matrix2 <- makeContrasts(NvsS=Tumor-Control,levels=design2)
+design2
+cont.matrix2 <- makeContrasts(TumourvsControl=Tumor-Control,levels=design2)
 
 ## Limma
 fit_2 <- lmFit(methyldataN,design2) # normalized data
 fit_2 <- contrasts.fit(fit_2,cont.matrix2)
 fit_2 <- eBayes(fit_2)
+volcanoplot(fit2)
+limma::plotMA(fit2, main= 'MA-plot')
 LIMMAout_2 <- topTable(fit_2,adjust="BH",number=nrow(exprs(methyldata)))
-head(LIMMAout_2)
+LIMMAout_2
 
+dim(LIMMAout_2[LIMMAout_2$adj.P.Val <= 0.0615913,]) 
+dim(LIMMAout_2[abs(LIMMAout_2$logFC) > 2 & LIMMAout_2$adj.P.Val <= 0.0615913,]) # 358 significante genen gevonden 
 
+dim(LIMMAout_2[LIMMAout_2$logFC > 2 & LIMMAout_2$adj.P.Val <= 0.0615913,]) # 251 significante genen gevonden 
+dim(LIMMAout_2[LIMMAout_2$logFC < (-2) & LIMMAout_2$adj.P.Val <= 0.0615913,]) # 107 significante genen gevonden 
 ## Check M-values for top results
-exprs(methyldataN)[rownames(methyldataN)%in%rownames(head(LIMMAout)),]
-# note that the probesets are not necessarly in the same order as for the limma output
+exprs(methyldataN)[rownames(methyldataN)%in%rownames(head(LIMMAout_2)),]
+betas(methyldataN)[rownames(methyldataN)%in%rownames(head(LIMMAout_2)),]
+
 
 ## Functional annotation of limma results
 ############################
 
 ## Load annotation and sort alphabetically on probe name
 #https://www.bioconductor.org/packages/devel/data/experiment/manuals/ChAMPdata/man/ChAMPdata.pdf
-data("probe.features") # this one?  
+data("probe.features")
 
 annotation_MA <- probe.features
 print(head(annotation_MA))
 annotation_MA <- annotation_MA[sort(rownames(annotation_MA),index.return=T)$ix,]
 
 ## Check if all probes are present in both sets
-dim(LIMMAout)
 dim(LIMMAout_2)
-dim(annotation_MA)
-sum(LIMMAout$Probe_ID%in%rownames(annotation_MA))
-sum(rownames(annotation_MA)%in%LIMMAout$Probe_ID) 
+dim(annotation_MA) # annotation has more rows than Limma output
 sum(LIMMAout_2$Probe_ID%in%rownames(annotation_MA))
 sum(rownames(annotation_MA)%in%LIMMAout_2$Probe_ID) 
 # Also check the reverse so no duplicate rows are present in annotation
 
 ## Since more probes are present in the annotation file, remove unnecessary probes
-annotation_MA <- annotation_MA[rownames(annotation_MA)%in%LIMMAout$Probe_ID,]
-
 annotation_MA <- annotation_MA[rownames(annotation_MA)%in%LIMMAout_2$Probe_ID,]
+dim(annotation_MA)
 ## Sort LIMMA output alphabetically on probe name
 LIMMAout_sorted_2 <- LIMMAout_2[sort(LIMMAout_2$Probe_ID,index.return=T)$ix,]
 
@@ -146,65 +138,40 @@ LIMMAout_sorted_2$Pos <- annotation_MA$MAPINFO
 LIMMAout_sorted_2$Chrom <- as.character(LIMMAout_sorted$Chrom)
 LIMMAout_sorted_2$Gene <- as.character(LIMMAout_sorted$Gene)
 LIMMAout_sorted_2$Feature <- as.character(LIMMAout_sorted$Feature)
+
 # The data type for these columns is altered to prevent issues further downstream
-LIMMAout_annot_2 <- LIMMAout_sorted_2[sort(LIMMAout_sorted_2$P.Value,index.return=T)$ix,c(1,12,13,10,11,4,7,8,5)] 
-# Sort on p-values to prevent errors in sorting due to equal FDR values
+LIMMAout_annot_2 <- LIMMAout_sorted_2[sort(LIMMAout_sorted_2$P.Value,index.return=T)$ix,c(1,12,13,10,11,4,7,8)] 
 LIMMAout_annot_2<- LIMMAout_annot_2[!LIMMAout_annot_2$Gene=="",]# filtering van de lege genes
 LIMMAout_annot_2
 
-sum(LIMMAout_annot_2$adj.P.Val<=0.0615913) # 1786
-significant_p_values <- LIMMAout_annot_2[LIMMAout_annot_2$adj.P.Val<=0.0615913,]
+dim(LIMMAout_annot_2[abs(LIMMAout_annot_2$logFC) > 2 & LIMMAout_annot_2$adj.P.Val <= 0.0615913,]) # we vinden 250 genen die significante differentiele methylatie hebben tumour vs control
+dim(LIMMAout_annot_2[LIMMAout_annot_2$logFC > 2 & LIMMAout_annot_2$adj.P.Val <= 0.0615913,]) # 182
+dim(LIMMAout_annot_2[LIMMAout_annot_2$logFC < (-2) & LIMMAout_annot_2$adj.P.Val <= 0.0615913,]) # 68
+# een positive logFC wijst op hogere methylatie in tumour sample dan in de control
+# een negative logFC wijst op een hogere methylatie in de control in vergelijking met de tumour.
+
+significant_p_values <- LIMMAout_annot_2[abs(LIMMAout_annot_2$logFC) > 2 & LIMMAout_annot_2$adj.P.Val <= 0.0615913,]
+foldchanges<- sort(significant_p_values$logFC,decreasing=TRUE)[0:10]
+
+topten <- significant_p_values[significant_p_values$logFC%in%foldchanges,]
+topten$Probe_ID
+dim(significant_p_values)
+# saving results
+save(significant_p_values, file= "Methylation_significant.Rda")
 significant_p_values
-## Add gene names to LIMMA output
-LIMMAout_sorted$Gene <- annotation_MA$gene
-LIMMAout_sorted$Feature <- annotation_MA$feature
-LIMMAout_sorted$Chrom <- annotation_MA$CHR
-LIMMAout_sorted$Pos <- annotation_MA$MAPINFO
-LIMMAout_sorted$Chrom <- as.character(LIMMAout_sorted$Chrom)
-LIMMAout_sorted$Gene <- as.character(LIMMAout_sorted$Gene)
-LIMMAout_sorted$Feature <- as.character(LIMMAout_sorted$Feature)
-# The data type for these columns is altered to prevent issues further downstream
-LIMMAout_annot <- LIMMAout_sorted[sort(LIMMAout_sorted$P.Value,index.return=T)$ix,c(1,12,13,10,11,4,7,8,5)] 
-# Sort on p-values to prevent errors in sorting due to equal FDR values
-LIMMAout_annot$Gene
 
-save(LIMMAout_annot_2, file= "Significant_output_annotation_methylation.Rda")
-
+write.table(significant_p_values$Gene,file='methylation_genes.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
 ## Interpretation results
 ############################
 
 ## Select CpGs in genic regions
-sum(LIMMAout_annot$adj.P.Val<0.05)
-sum(LIMMAout_annot$adj.P.Val[LIMMAout_annot$Gene!=""]<0.05)
-
-LIMMAout_annot_gene <- LIMMAout_annot[LIMMAout_annot$Gene!="",]
-
-## Check genic results 
-head(LIMMAout_annot_gene)
-LIMMAout_annot_gene[0:50,]
-LIMMAout_annot_gene[50:100,]
-topgenes_genic <- unique(LIMMAout_annot_gene$Gene[1:10])
-for (i in 1:length(topgenes_genic)){
-  LIMMAout_subset <- LIMMAout_annot_gene[(LIMMAout_annot_gene$Gene==topgenes_genic[i]) & 
-                                           (LIMMAout_annot_gene$adj.P.Val<0.05) & (abs(LIMMAout_annot_gene$logFC)>2),]
-  print(LIMMAout_subset[sort(LIMMAout_subset$Pos,index.return=T)$ix,])
-}
 
 ## Select CpGs in promoter regions
-LIMMAout_annot_prom <- LIMMAout_annot_gene[grepl("TSS",LIMMAout_annot_gene$Feature) | (LIMMAout_annot_gene$Feature=="1stExon"),]
+LIMMAout_annot_prom <- significant_p_values[grepl("TSS",significant_p_values$Feature) | (significant_p_values$Feature=="1stExon"),] #TSS = transcription start site
+dim(LIMMAout_annot_prom) # 82 'significante genen' in de promoter regions 
 head(LIMMAout_annot_prom)
 
-## Look for multiple CpG in promoter regions undergoing similar methylation differences
-topgenes_prom <- unique(LIMMAout_annot_prom$Gene[1:10])
-for (i in 1:length(topgenes_prom)){
-  LIMMAout_subset <- LIMMAout_annot_prom[(LIMMAout_annot_prom$Gene==topgenes_prom[i]) & 
-                                           (LIMMAout_annot_prom$adj.P.Val<0.10),]
-  if(nrow(LIMMAout_subset)>1){
-    print(LIMMAout_subset[sort(LIMMAout_subset$Pos,index.return=T)$ix,])
-  }
-  
-  
-}
+write.table(LIMMAout_annot_prom$Gene,file='Promoter_genes.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
 
 
 

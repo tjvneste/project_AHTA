@@ -1,8 +1,6 @@
 #Transcription profiling of human breast tumors and their paired normal tissues
 #desktop
 setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/Transcription profiling of human breast tumors and their paired normal tissues")
-# laptop 
-#setwd("~/documenten/Documenten/Ugent/applied high-throughput analysis/project_AHTA/Transcription profiling of human breast tumors and their paired normal tissues")
 #https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-15852/
 
 "BACKGROUND
@@ -32,39 +30,57 @@ getAE("E-GEOD-15852", type = 'raw')
 
 # load in the expressionFeatureSet object
 BreastCancer <- ArrayExpress("E-GEOD-15852")
-BreastCancer
 
 # exprs functions returns the intensity values for each sample (column)
 exprs(BreastCancer)
 
 ## Reads in all .cel files and takes phenoData from the ExpressionFeatureset we loaded using https_ArrayExpress
 BreastCancer <- ReadAffy(phenoData=pData(BreastCancer)) 
+BreastCancer <- ReadAffy() # bcs data won't load from arrayexpress
 
-#pData returns the phenotypic data we loaded using ReadAffy
+# Creating Annotation matrix 
 pData(BreastCancer)
+disease <- NULL
+patients <- rep(1:43, each = 2)  
+
+
+for (i in pData(BreastCancer)$sample){
+  if((i %% 2) == 0) {
+    disease[i] <- 'Cancer'}
+  else{
+    disease[i] <- 'Normal'}
+
+}
+disease
+patients
+annotation <- data.frame(annotation,patients)
+dim(exprs(BreastCancer))
+
 
 ## Quality Control on raw data
 ####################
 # this is used to perform an explorative quality evaluation of the orginal data and the log transformed data
 ## arrayQualityMetrics (open "index.html" file for a full overview of the output)
-arrayQualityMetrics(BreastCancer,outdir="/Users/tristanvanneste/Documents/Bioinformatics/project Tristan/raw",force=T)
-arrayQualityMetrics(BreastCancer,outdir="/Users/tristanvanneste/Documents/Bioinformatics/project Tristan/rawlog",force=T,do.logtransform=T)
+arrayQualityMetrics(BreastCancer,outdir="~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/Transcription profiling of human breast tumors and their paired normal tissues/raw",force=T)
+arrayQualityMetrics(BreastCancer,outdir="~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/Transcription profiling of human breast tumors and their paired normal tissues/rawlog",force=T,do.logtransform=T)
 
 # Preprocessing of the data 
 # rma function is used to perform background correction as well as quantile normalization 
-BreastCancerRMA<- affy::rma(BreastCancer,background=T)
-limma::plotDensities(exprs(BreastCancerRMA))
+BreastCancerRMA<- affy::rma(BreastCancer,background=T) #  If TRUE, background correct using RMA background correction
+
+
 ## Quality Control on preprocessed data
 ## QC post preprocessing
-arrayQualityMetrics(BreastCancerRMA,outdir="/Users/tristanvanneste/Documents/Bioinformatics/project Tristan/RMA",force=T)  			#RMA produces log-transformed data
+arrayQualityMetrics(BreastCancerRMA,outdir="~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/Transcription profiling of human breast tumors and their paired normal tissues/RMA",force=T)  			#RMA produces log-transformed data
 
-head(pData(BreastCancerRMA))
-annot <- factor(pData(BreastCancerRMA)[,7]) # normal breast tissue and breast tumor tissue
-annot
-length(annot) # 86
+head(exprs(BreastCancerRMA))
+head(exprs(BreastCancer))
+#annot <- factor(pData(BreastCancerRMA)[,7]) # normal breast tissue and breast tumor tissue
+annotation
+dim(annotation) # 86 2
 
-annotb <- as.double(annot==annot[4]) # we want the breast tumor tissue to be one and the control to be zero 
-annotb
+#annotb <- as.double(annot==annot[4]) # we want the breast tumor tissue to be one and the control to be zero 
+#annotb
 # the problem is we don't account for the persons but can we? bcs we have 86 samples? YES
 pData(BreastCancerRMA)$Patients<- pData(BreastCancerRMA)$Hybridization.Name
 pData(BreastCancerRMA)$Patients <- gsub('Normal', '',pData(BreastCancerRMA)$Patients)
@@ -78,25 +94,38 @@ sum(grepl('BC0117', pData(BreastCancerRMA)$Patients))
 ID <- factor(pData(BreastCancerRMA)$Patients)
 length(levels(ID))
 
+
+annotation$patients <- factor(annotation$patients)
+annotation$annotation <- factor(annotation$annotation)
+annotation
+
 ## Differential expression by LIMMA
 # why LIMMA? => Limma has more power than SAM
 # Method as stated in limma package (no intercept, easy for simple model designs)
-design <- model.matrix(~0+annot+ID)
+design <- model.matrix(~0+annotation+patients, data= annotation)
 colSums(design) # checking if this is correct 
 #patients toevoegen
-colnames(design)[1:2]<-c("Cancer_breast_tissue","normal_breast_tissue")
+colnames(design)[1:2]<-c("Cancer_tissue","normal_tissue")
 
 fit <- lmFit(BreastCancerRMA,design)
-cont.matrix <- makeContrasts(NvsS=Cancer_breast_tissue-normal_breast_tissue,levels=design)
+cont.matrix <- makeContrasts(CancervsControl=Cancer_tissue-normal_tissue,levels=design)
 fit2 <- contrasts.fit(fit,cont.matrix) 
 fit2 <- eBayes(fit2)
+
+par(mfrow=c(1,1))
+volcanoplot(fit2)
+limma::plotMA(fit2, main= 'MA-plot')
+
 LIMMAout <- topTable(fit2,adjust="BH",number=nrow(exprs(BreastCancerRMA))) 
 head(LIMMAout)
 
 # Have a look at the results and search for other probesets for your DE genes
-head(LIMMAout)
-significant_pvalues_1<- LIMMAout[LIMMAout$adj.P.Val<0.05,]
-dim(significant_pvalues_1)
+significant_pvalues<- LIMMAout[LIMMAout$adj.P.Val<0.05,]
+dim(significant_pvalues) # 5333 probes statistical significant
+significant_pvalues_1<- LIMMAout[LIMMAout$adj.P.Val<0.05 & abs(LIMMAout$logFC) >1,]
+dim(significant_pvalues_1) # 40 probes statistical significant 
+significant_pvalues_2<- LIMMAout[LIMMAout$adj.P.Val<0.05 & abs(LIMMAout$logFC) >1.5,]
+dim(significant_pvalues_2) # 9 probes statistical significant 
 head(significant_pvalues_1)
 tail(significant_pvalues_1)
 
@@ -129,7 +158,7 @@ LIMMAout_annot <- LIMMAout_sorted[sort(LIMMAout_sorted$adj.P.Val,index.return=T)
 
 # Have a look at the results and search for other probesets for your DE genes
 head(LIMMAout_annot)
-significant_pvalues<- LIMMAout_annot[LIMMAout_annot$adj.P.Val<0.05,]
+significant_pvalues<- LIMMAout_annot[LIMMAout_annot$adj.P.Val<0.05& abs(LIMMAout$logFC) >1,]
 dim(significant_pvalues)
 head(significant_pvalues)
 tail(significant_pvalues)
@@ -162,3 +191,4 @@ for (i in rownames(significant_pvalues)){
 
 save(significant_pvalues,file="Significant_output_annotation_transcription.Rda") # object noemt significant_pvalues
 load("Significant_output_annotation_transcription.Rda")
+biologisch_relevant <- significant_pvalues[abs(significant_pvalues$logFC)>1,]

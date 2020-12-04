@@ -158,9 +158,16 @@ topten$Probe_ID
 dim(significant_p_values)
 # saving results
 save(significant_p_values, file= "Methylation_significant.Rda")
-significant_p_values
+load('Methylation_significant.Rda')
+dim(significant_p_values)
+
+pos_logfold<- significant_p_values[significant_p_values$logFC > 2 & significant_p_values$adj.P.Val <= 0.0615913,]
+neg_logfold<- significant_p_values[significant_p_values$logFC < (-2) & significant_p_values$adj.P.Val <= 0.0615913,]
+
 
 write.table(significant_p_values$Gene,file='methylation_genes.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
+write.table(pos_logfold$Gene,file='methylation_genes_pos_logfold.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
+write.table(neg_logfold$Gene,file='methylation_genes_neg_logfold.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
 ## Interpretation results
 ############################
 

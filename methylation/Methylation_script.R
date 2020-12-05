@@ -1,7 +1,5 @@
 setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/methylation/GSE101443_RAW")
 #https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE101443
-#laptop 
-setwd("~/documenten/Documenten/Ugent/applied high-throughput analysis/project_AHTA/methylation/GSE101443_RAW")
 
 ## Load packages
 library('lumi')
@@ -91,12 +89,13 @@ cont.matrix2 <- makeContrasts(TumourvsControl=Tumor-Control,levels=design2)
 fit_2 <- lmFit(methyldataN,design2) # normalized data
 fit_2 <- contrasts.fit(fit_2,cont.matrix2)
 fit_2 <- eBayes(fit_2)
-volcanoplot(fit2)
-limma::plotMA(fit2, main= 'MA-plot')
+volcanoplot(fit_2)
+limma::plotMA(fit_2, main= 'MA-plot')
+
 LIMMAout_2 <- topTable(fit_2,adjust="BH",number=nrow(exprs(methyldata)))
 LIMMAout_2
 
-dim(LIMMAout_2[LIMMAout_2$adj.P.Val <= 0.0615913,]) 
+dim(LIMMAout_2[LIMMAout_2$adj.P.Val <= 0.0615913,]) # 1786
 dim(LIMMAout_2[abs(LIMMAout_2$logFC) > 2 & LIMMAout_2$adj.P.Val <= 0.0615913,]) # 358 significante genen gevonden 
 
 dim(LIMMAout_2[LIMMAout_2$logFC > 2 & LIMMAout_2$adj.P.Val <= 0.0615913,]) # 251 significante genen gevonden 
@@ -151,11 +150,13 @@ dim(LIMMAout_annot_2[LIMMAout_annot_2$logFC < (-2) & LIMMAout_annot_2$adj.P.Val 
 # een negative logFC wijst op een hogere methylatie in de control in vergelijking met de tumour.
 
 significant_p_values <- LIMMAout_annot_2[abs(LIMMAout_annot_2$logFC) > 2 & LIMMAout_annot_2$adj.P.Val <= 0.0615913,]
+dim(significant_p_values) # 250 8
 foldchanges<- sort(significant_p_values$logFC,decreasing=TRUE)[0:10]
 
 topten <- significant_p_values[significant_p_values$logFC%in%foldchanges,]
 topten$Probe_ID
 dim(significant_p_values)
+
 # saving results
 save(significant_p_values, file= "Methylation_significant.Rda")
 load('Methylation_significant.Rda')
@@ -179,6 +180,6 @@ dim(LIMMAout_annot_prom) # 82 'significante genen' in de promoter regions
 head(LIMMAout_annot_prom)
 
 write.table(LIMMAout_annot_prom$Gene,file='Promoter_genes.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
-
+sessionInfo()
 
 

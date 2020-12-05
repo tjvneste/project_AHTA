@@ -3,22 +3,11 @@
 setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/Transcription profiling of human breast tumors and their paired normal tissues")
 #https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-15852/
 
-"BACKGROUND
-Microarray is widely used to monitor gene expression changes in breast cancer. The transcriptomic changes in breast cancer is commonly occured during the transition of normal cells to cancerous cells. 
-This is the first study on gene expression profiling of multi ethnic of Malaysian breast cancer patients (Malays, Chinese and Indian). 
-We aim to identify differentially expressed genes between tumors and normal tissues. We have identified a set of 33 significant differentially expressed genes in the tumor vs. normal group at p<0.001. 
-We study the gene expression patterns of 43 breast tumors and their paired normal control by using Affymetrix genechip U133A. 
-We have identified a set of 33 significant differentially expressed genes in the tumor vs. normal group at p<0.001. Experiment Overall Design: Total RNAs were extracted from breast cancer and normal tissues. 
-Samples were processed and hybridized on the chip for 16 hours. 
-At the end of the study, we obtained a total of 86 set of gene expression data, which were from 43 tumors and 43 normal tissues. The gene expression were then compared between the tumor and normal groups.
-"
-
 ## Load packages
 library(affy)
 library(arrayQualityMetrics)
 library(ArrayExpress)
 library(limma)
-library(siggenes)
 library(biomaRt)
 
 ## Import Data
@@ -31,15 +20,16 @@ getAE("E-GEOD-15852", type = 'raw')
 # load in the expressionFeatureSet object
 BreastCancer <- ArrayExpress("E-GEOD-15852")
 
-# exprs functions returns the intensity values for each sample (column)
-exprs(BreastCancer)
-
 ## Reads in all .cel files and takes phenoData from the ExpressionFeatureset we loaded using https_ArrayExpress
 BreastCancer <- ReadAffy(phenoData=pData(BreastCancer)) 
-BreastCancer <- ReadAffy() # bcs data won't load from arrayexpress
+BreastCancer <- ReadAffy() # If ArrayExpress does not work => use this
+
+dim(pData(BreastCancer))
+exprs(BreastCancer)
+pData(BreastCancer)
 
 # Creating Annotation matrix 
-pData(BreastCancer)
+
 disease <- NULL
 patients <- rep(1:43, each = 2)  
 
@@ -53,7 +43,7 @@ for (i in pData(BreastCancer)$sample){
 }
 disease
 patients
-annotation <- data.frame(annotation,patients)
+annotation <- data.frame(disease,patients)
 dim(exprs(BreastCancer))
 
 
@@ -79,6 +69,7 @@ head(exprs(BreastCancer))
 annotation
 dim(annotation) # 86 2
 
+# this piece is only necessary if you use the object of ArrayExpress otherwise skip this
 #annotb <- as.double(annot==annot[4]) # we want the breast tumor tissue to be one and the control to be zero 
 #annotb
 # the problem is we don't account for the persons but can we? bcs we have 86 samples? YES
@@ -94,15 +85,14 @@ sum(grepl('BC0117', pData(BreastCancerRMA)$Patients))
 ID <- factor(pData(BreastCancerRMA)$Patients)
 length(levels(ID))
 
-
+# begin here again 
 annotation$patients <- factor(annotation$patients)
-annotation$annotation <- factor(annotation$annotation)
+annotation$disease <- factor(annotation$disease)
 annotation
 
 ## Differential expression by LIMMA
-# why LIMMA? => Limma has more power than SAM
 # Method as stated in limma package (no intercept, easy for simple model designs)
-design <- model.matrix(~0+annotation+patients, data= annotation)
+design <- model.matrix(~0+disease+patients, data= annotation)
 colSums(design) # checking if this is correct 
 #patients toevoegen
 colnames(design)[1:2]<-c("Cancer_tissue","normal_tissue")
@@ -112,27 +102,27 @@ cont.matrix <- makeContrasts(CancervsControl=Cancer_tissue-normal_tissue,levels=
 fit2 <- contrasts.fit(fit,cont.matrix) 
 fit2 <- eBayes(fit2)
 
-par(mfrow=c(1,1))
-volcanoplot(fit2)
-limma::plotMA(fit2, main= 'MA-plot')
-
 LIMMAout <- topTable(fit2,adjust="BH",number=nrow(exprs(BreastCancerRMA))) 
 head(LIMMAout)
 
+limma::plotMA(fit2, main= 'MA-plot')
+hist(fit2$p.value, main= 'distributions of the p-values',xlab='p-values')
+
+threshold.sign <- LIMMAout[LIMMAout$adj.P.Val<0.05,]
+dim(threshold.sign)
+with(LIMMAout, plot(logFC, -log10(P.Value), pch=20,main="Volcano plot"))
+with(subset(threshold.sign),points(logFC, -log10(P.Value),pch=20,col="red"))
+
+     
 # Have a look at the results and search for other probesets for your DE genes
 significant_pvalues<- LIMMAout[LIMMAout$adj.P.Val<0.05,]
 dim(significant_pvalues) # 5333 probes statistical significant
 significant_pvalues_1<- LIMMAout[LIMMAout$adj.P.Val<0.05 & abs(LIMMAout$logFC) >1,]
 dim(significant_pvalues_1) # 40 probes statistical significant 
+significant_pvalues_1
 significant_pvalues_2<- LIMMAout[LIMMAout$adj.P.Val<0.05 & abs(LIMMAout$logFC) >1.5,]
 dim(significant_pvalues_2) # 9 probes statistical significant 
 head(significant_pvalues_1)
-tail(significant_pvalues_1)
-
-## Optional: Differential expression analysis with MAS preprocessed data
-####################
-# we were working on the probe level not at level of genes per se
-# most genes are represented by a single probeset on a microarray, for some genes multiple probesets are present. 
 
 ## Load annotation and sort alphabetically on probe name
 annotation_BC <- read.table("A-AFFY-33.adf.txt",header=T,sep="\t",skip=17,fill=T)
@@ -158,13 +148,14 @@ LIMMAout_annot <- LIMMAout_sorted[sort(LIMMAout_sorted$adj.P.Val,index.return=T)
 
 # Have a look at the results and search for other probesets for your DE genes
 head(LIMMAout_annot)
-significant_pvalues<- LIMMAout_annot[LIMMAout_annot$adj.P.Val<0.05& abs(LIMMAout$logFC) >1,]
-dim(significant_pvalues)
+significant_pvalues<- LIMMAout_annot[LIMMAout_annot$adj.P.Val<0.05& abs(LIMMAout_annot$logFC) >1,]
+dim(significant_pvalues) # 40
 head(significant_pvalues)
 tail(significant_pvalues)
 
 affyids <- rownames(significant_pvalues)
 
+ensembl <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
 output_sign <-getBM(attributes = c('affy_hg_u133_plus_2', 'entrezgene_id','hgnc_symbol','chromosome_name', 'start_position', 'end_position'), #  is a vector of attributes that one wants to retrieve (= the output of the query).
       filters = 'affy_hg_u133_plus_2', #  is a vector of filters that one wil use as input to the query.
       values = affyids, # a vector of values for the filters
@@ -188,7 +179,11 @@ for (i in rownames(significant_pvalues)){
   significant_pvalues$end_position[count] <- output_sign[output_sign$affy_hg_u133_plus_2==i,6]
   count=count+1
 }
+significant_pvalues2 <- significant_pvalues
+dim(significant_pvalues2)
+head(significant_pvalues2)
 
-save(significant_pvalues,file="Significant_output_annotation_transcription.Rda") # object noemt significant_pvalues
+save(significant_pvalues2,file="Significant_output_annotation_transcription.Rda") # object noemt significant_pvalues2
 load("Significant_output_annotation_transcription.Rda")
-biologisch_relevant <- significant_pvalues[abs(significant_pvalues$logFC)>1,]
+sessionInfo()
+

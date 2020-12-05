@@ -1,14 +1,25 @@
-load("Significant_output_annotation_transcription.Rda")# object noemt significant_pvalues
-load("Significant_output_annotation_methylation.Rda") #LIMMAout_annot_2
+setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/Transcription profiling of human breast tumors and their paired normal tissues")
 
-dim(LIMMAout_annot_2)
-dim(significant_pvalues)
-# filtering op limma
-LIMMAout_annot <- LIMMAout_annot_2[LIMMAout_annot_2$adj.P.Val<=0.0615913,]
-dim(LIMMAout_annot)
-dim(significant_pvalues)
+load("Significant_output_annotation_transcription.Rda")# significant_pvalues2
+load("Methylation_significant.Rda") # significant_p_values
 
-head(LIMMAout_annot)
-head(significant_pvalues)
+dim(significant_pvalues2) # 39 11
+dim(significant_p_values) #250 8
 
-sum(LIMMAout_annot$Gene%in%significant_pvalues$hgnc_symbol) # 321 genen die in allebei voorkomen
+head(significant_pvalues2) # transcription 
+head(significant_p_values) # methylation
+
+sum(significant_pvalues2$hgnc_symbol%in%significant_p_values$Gene) # 0 common genes 
+
+write.table(significant_pvalues2$hgnc_symbol,file='transcription_genes.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
+
+pos_logfold<- significant_pvalues2[significant_pvalues2$logFC >= 1,]
+# this means higher expression in the tumor samples
+neg_logfold<- significant_pvalues2[significant_pvalues2$logFC <= (-1),]
+# this means higher expression in the control samples
+
+write.table(pos_logfold$hgnc_symbol,file='transcription_genes_pos_logfold.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
+write.table(neg_logfold$hgnc_symbol,file='transcription_genes_neg_logfold.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
+## Interpretation results
+
+sessionInfo()

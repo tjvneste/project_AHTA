@@ -134,9 +134,9 @@ LIMMAout_sorted_2$Gene <- annotation_MA$gene
 LIMMAout_sorted_2$Feature <- annotation_MA$feature
 LIMMAout_sorted_2$Chrom <- annotation_MA$CHR
 LIMMAout_sorted_2$Pos <- annotation_MA$MAPINFO
-LIMMAout_sorted_2$Chrom <- as.character(LIMMAout_sorted$Chrom)
-LIMMAout_sorted_2$Gene <- as.character(LIMMAout_sorted$Gene)
-LIMMAout_sorted_2$Feature <- as.character(LIMMAout_sorted$Feature)
+LIMMAout_sorted_2$Chrom <- as.character(LIMMAout_sorted_2$Chrom)
+LIMMAout_sorted_2$Gene <- as.character(LIMMAout_sorted_2$Gene)
+LIMMAout_sorted_2$Feature <- as.character(LIMMAout_sorted_2$Feature)
 
 # The data type for these columns is altered to prevent issues further downstream
 LIMMAout_annot_2 <- LIMMAout_sorted_2[sort(LIMMAout_sorted_2$P.Value,index.return=T)$ix,c(1,12,13,10,11,4,7,8)] 
@@ -156,6 +156,11 @@ foldchanges<- sort(significant_p_values$logFC,decreasing=TRUE)[0:10]
 topten <- significant_p_values[significant_p_values$logFC%in%foldchanges,]
 topten$Probe_ID
 dim(significant_p_values)
+
+adj_pvalues <- LIMMAout_annot_2[LIMMAout_annot_2$adj.P.Val <= 0.0615913,]
+dim(adj_pvalues)
+head(adj_pvalues)
+save(adj_pvalues,file="methylation_all_pvalues.Rda")
 
 # saving results
 save(significant_p_values, file= "Methylation_significant.Rda")

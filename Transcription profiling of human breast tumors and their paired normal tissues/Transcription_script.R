@@ -148,8 +148,11 @@ LIMMAout_annot <- LIMMAout_sorted[sort(LIMMAout_sorted$adj.P.Val,index.return=T)
 
 # Have a look at the results and search for other probesets for your DE genes
 head(LIMMAout_annot)
+dim(LIMMAout_annot)
 significant_pvalues<- LIMMAout_annot[LIMMAout_annot$adj.P.Val<0.05& abs(LIMMAout_annot$logFC) >1,]
+adjusted_pvalues<- LIMMAout_annot[LIMMAout_annot$adj.P.Val<0.05,]
 dim(significant_pvalues) # 40
+dim(adjusted_pvalues) # 
 head(significant_pvalues)
 tail(significant_pvalues)
 
@@ -161,7 +164,44 @@ output_sign <-getBM(attributes = c('affy_hg_u133_plus_2', 'entrezgene_id','hgnc_
       values = affyids, # a vector of values for the filters
       mart = ensembl)
 
+affyids <- rownames(adjusted_pvalues)
 
+ensembl <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
+output_sign <-getBM(attributes = c('affy_hg_u133_plus_2', 'entrezgene_id','hgnc_symbol','chromosome_name', 'start_position', 'end_position'), #  is a vector of attributes that one wants to retrieve (= the output of the query).
+                    filters = 'affy_hg_u133_plus_2', #  is a vector of filters that one wil use as input to the query.
+                    values = affyids, # a vector of values for the filters
+                    mart = ensembl)
+
+adjusted_pvalues[,"hgnc_symbol"] <-NA
+adjusted_pvalues[,"chromosome_name"] <-NA
+adjusted_pvalues[,"start_position"] <-NA
+adjusted_pvalues[,"end_position"] <-NA
+# filtering of the zero entries 
+
+output_sign <- output_sign[!output_sign$hgnc_symbol=="",]
+output_sign <- output_sign[!output_sign$affy_hg_u133_plus_2=="",]
+count=1
+adjusted_pvalues <- adjusted_pvalues[rownames(adjusted_pvalues)%in%output_sign$affy_hg_u133_plus_2,]
+
+for (i in rownames(adjusted_pvalues)){
+  adjusted_pvalues$hgnc_symbol[count] <- output_sign[output_sign$affy_hg_u133_plus_2==i,3]
+  adjusted_pvalues$chromosome_name[count] <- output_sign[output_sign$affy_hg_u133_plus_2==i,4]
+  adjusted_pvalues$start_position[count] <- output_sign[output_sign$affy_hg_u133_plus_2==i,5]
+  adjusted_pvalues$end_position[count] <- output_sign[output_sign$affy_hg_u133_plus_2==i,6]
+  count=count+1
+}
+
+dim(adjusted_pvalues) # 5028 11
+head(adjusted_pvalues)
+
+save(adjusted_pvalues,file="adjusted_pvalues_annotation_transcription.Rda") # object noemt adjusted_pvalues
+pos_adj <- adjusted_pvalues[adjusted_pvalues$logFC>0,]
+dim(pos_adj) # 3211 
+#expression is higher in tumor than in normal 
+write.table(adjusted_pvalues$hgnc_symbol,file='transcription_genes_adjusted_pvalues.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
+write.table(pos_adj$hgnc_symbol,file='transcription_genes_adjusted_pvalues_pos.txt',row.names=FALSE,quote=FALSE,col.names=FALSE) # this gives some interesting results
+
+# this is only for the probes that have abs(logfold change) >1
 significant_pvalues[,"hgnc_symbol"] <-NA
 significant_pvalues[,"chromosome_name"] <-NA
 significant_pvalues[,"start_position"] <-NA

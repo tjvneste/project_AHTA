@@ -220,7 +220,7 @@ for (i in rownames(significant_pvalues)){
   count=count+1
 }
 significant_pvalues2 <- significant_pvalues
-dim(significant_pvalues2)
+dim(significant_pvalues2) # 39 11
 head(significant_pvalues2)
 
 save(significant_pvalues2,file="Significant_output_annotation_transcription.Rda") # object noemt significant_pvalues2

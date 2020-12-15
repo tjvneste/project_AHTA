@@ -1,3 +1,4 @@
+#set working directory 
 setwd("~/Documents/Bioinformatics/Applied high-throughput analysis/project_AHTA/methylation/GSE101443_RAW")
 #https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE101443
 
@@ -12,11 +13,10 @@ ID <- c('GSM2703232','GSM2703233', 'GSM2703234', 'GSM2703235', 'GSM2703236','GSM
 condition <- c('Tumour_A','Normal_A','Tumour_B','Normal_B','Tumour_C','Normal_C','Tumour_D','Normal_D')
 Patient <- c('A','A','B','B','C','C','D','D')
 annotation <- data.frame(ID,condition,Patient)
-
+annotation
 ## Have a look at the data and annotation
 print(methyldata)
 print(dim(methyldata))
-print(annotation)
 print(sum(is.na(exprs(methyldata)))) # 1918
 print(head(betas(methyldata))) # The “betas” function will retreive the beta values ( = methylation percentages) and the “exprs” function will retreive the M-values.
 print(head(exprs(methyldata)))
@@ -89,22 +89,33 @@ cont.matrix2 <- makeContrasts(TumourvsControl=Tumor-Control,levels=design2)
 fit_2 <- lmFit(methyldataN,design2) # normalized data
 fit_2 <- contrasts.fit(fit_2,cont.matrix2)
 fit_2 <- eBayes(fit_2)
-volcanoplot(fit_2)
-limma::plotMA(fit_2, main= 'MA-plot')
-
-hist(fit_2$p.value, main= 'distributions of the p-values',xlab='p-values')
 
 LIMMAout_2 <- topTable(fit_2,adjust="BH",number=nrow(exprs(methyldata)))
 LIMMAout_2
 
+hist(fit_2$p.value, main= 'distributions of the p-values',xlab='p-values')
+
+# Volcano plot
+threshold.sign <- LIMMAout_2[LIMMAout_2$adj.P.Val<0.10,]
+dim(threshold.sign)
+with(LIMMAout_2, plot(logFC, -log10(P.Value), pch=20,main="Volcano plot"))
+with(subset(threshold.sign),points(logFC, -log10(P.Value),pch=20,col="red"))
+
+# MA plot
+threshold.sign <- LIMMAout_2[LIMMAout_2$adj.P.Val<0.10,]
+threshold.signdown <- LIMMAout_2[LIMMAout_2$adj.P.Val0.10,]
+dim(threshold.sign)
+with(LIMMAout_2, plot(AveExpr, logFC, pch=20,main="MA plot"))
+with(subset(threshold.sign),points(AveExpr, logFC,pch=20,col="red"))
+
+
 dim(LIMMAout_2[LIMMAout_2$adj.P.Val <= 0.0615913,]) # 1786
 dim(LIMMAout_2[LIMMAout_2$adj.P.Val <= 0.10,]) # 18540
-dim(LIMMAout_2[abs(LIMMAout_2$logFC) > 2 & LIMMAout_2$adj.P.Val <= 0.0615913,]) # 358 significante genen gevonden 
-dim(LIMMAout_2[abs(LIMMAout_2$logFC) > 2 & LIMMAout_2$adj.P.Val <= 0.10,]) # 933 significante probes gevonden
+dim(LIMMAout_2[abs(LIMMAout_2$logFC) > 2 & LIMMAout_2$adj.P.Val <= 0.10,]) # 933 significant probes 
 
 
-dim(LIMMAout_2[LIMMAout_2$logFC > 2 & LIMMAout_2$adj.P.Val <= 0.10,]) # 701 significante genen gevonden 
-dim(LIMMAout_2[LIMMAout_2$logFC < (-2) & LIMMAout_2$adj.P.Val <= 0.10,]) # 232 significante genen gevonden 
+dim(LIMMAout_2[LIMMAout_2$logFC > 2 & LIMMAout_2$adj.P.Val <= 0.10,]) # 701 significant genes 
+dim(LIMMAout_2[LIMMAout_2$logFC < (-2) & LIMMAout_2$adj.P.Val <= 0.10,]) # 232 significant genes  
 ## Check M-values for top results
 exprs(methyldataN)[rownames(methyldataN)%in%rownames(head(LIMMAout_2)),]
 betas(methyldataN)[rownames(methyldataN)%in%rownames(head(LIMMAout_2)),]
@@ -114,7 +125,6 @@ betas(methyldataN)[rownames(methyldataN)%in%rownames(head(LIMMAout_2)),]
 ############################
 
 ## Load annotation and sort alphabetically on probe name
-#https://www.bioconductor.org/packages/devel/data/experiment/manuals/ChAMPdata/man/ChAMPdata.pdf
 data("probe.features")
 
 annotation_MA <- probe.features
@@ -145,55 +155,39 @@ LIMMAout_sorted_2$Feature <- as.character(LIMMAout_sorted_2$Feature)
 
 # The data type for these columns is altered to prevent issues further downstream
 LIMMAout_annot_2 <- LIMMAout_sorted_2[sort(LIMMAout_sorted_2$P.Value,index.return=T)$ix,c(1,12,13,10,11,4,7,8)] 
-LIMMAout_annot_2<- LIMMAout_annot_2[!LIMMAout_annot_2$Gene=="",]# filtering van de lege genes
+LIMMAout_annot_2<- LIMMAout_annot_2[!LIMMAout_annot_2$Gene=="",]# filtering 
 LIMMAout_annot_2
 
-dim(LIMMAout_annot_2[abs(LIMMAout_annot_2$logFC) > 2 & LIMMAout_annot_2$adj.P.Val <= 0.10,]) # we vinden 622 genen die significante differentiele methylatie hebben tumour vs control
+dim(LIMMAout_annot_2[abs(LIMMAout_annot_2$logFC) > 2 & LIMMAout_annot_2$adj.P.Val <= 0.10,]) # 622
 dim(LIMMAout_annot_2[LIMMAout_annot_2$logFC > 2 & LIMMAout_annot_2$adj.P.Val <= 0.10,]) # 481
 dim(LIMMAout_annot_2[LIMMAout_annot_2$logFC < (-2) & LIMMAout_annot_2$adj.P.Val <= 0.10,]) # 141
-# een positive logFC wijst op hogere methylatie in tumour sample dan in de control
-# een negative logFC wijst op een hogere methylatie in de control in vergelijking met de tumour.
+# a positive logFC points to higher methylation in tumor than in control 
+# a negative logFC points to higher methylation in control than in sample
 
 significant_p_values <- LIMMAout_annot_2[abs(LIMMAout_annot_2$logFC) > 2 & LIMMAout_annot_2$adj.P.Val <= 0.10,]
 dim(significant_p_values) # 622 8
-foldchanges<- sort(significant_p_values$logFC,decreasing=TRUE)[0:10]
-
-topten <- significant_p_values[significant_p_values$logFC%in%foldchanges,]
-topten$Probe_ID
-dim(significant_p_values)
-
-adj_pvalues <- LIMMAout_annot_2[LIMMAout_annot_2$adj.P.Val <= 0.10,]
-dim(adj_pvalues)
-head(adj_pvalues)
-save(adj_pvalues,file="methylation_all_pvalues.Rda")
-load('methylation_all_pvalues.Rda')
-
-hist(adj_pvalues$P.Value)
 # saving results
 save(significant_p_values, file= "Methylation_significant.Rda")
+foldchanges<- sort(significant_p_values$logFC,decreasing=TRUE)[0:10]
+topten <- significant_p_values[significant_p_values$logFC%in%foldchanges,]
+topten
+
+adj_pvalues <- LIMMAout_annot_2[LIMMAout_annot_2$adj.P.Val <= 0.10,]
+dim(adj_pvalues) # 13179
+head(adj_pvalues)
+save(adj_pvalues,file="methylation_all_pvalues.Rda")
+
+load('methylation_all_pvalues.Rda')
 load('Methylation_significant.Rda')
-dim(significant_p_values) # 622 8
 
-pos_logfold<- significant_p_values[significant_p_values$logFC > 2,]
-neg_logfold<- significant_p_values[significant_p_values$logFC < (-2),]
-
-dim(pos_logfold) # 481
-dim(neg_logfold) # 141
-
-write.table(significant_p_values$Gene,file='methylation_genes.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
-write.table(pos_logfold$Gene,file='methylation_genes_pos_logfold.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
-write.table(neg_logfold$Gene,file='methylation_genes_neg_logfold.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
 ## Interpretation results
 ############################
 
-## Select CpGs in genic regions
-
-## Select CpGs in promoter regions
+## Select probes in promoter regions
 LIMMAout_annot_prom <- significant_p_values[grepl("TSS",significant_p_values$Feature) | (significant_p_values$Feature=="1stExon"),] #TSS = transcription start site
-dim(LIMMAout_annot_prom) # 231 'significante genen' in de promoter regions 
+dim(LIMMAout_annot_prom) # 231 
 head(LIMMAout_annot_prom)
 
 write.table(LIMMAout_annot_prom$Gene,file='Promoter_genes.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
 sessionInfo()
-
 

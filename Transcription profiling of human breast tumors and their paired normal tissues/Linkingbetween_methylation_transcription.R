@@ -5,8 +5,6 @@ library(goseq)
 library(tidyverse)
 library(ggplot2)
 
-BiocManager::install("org.Mm.eg.db")
-
 load("Significant_output_annotation_transcription.Rda")# significant_pvalues2
 load('methylation_all_pvalues.Rda') # adj_pvalues
 load("adjusted_pvalues_annotation_transcription.Rda") # adjusted pvalues
@@ -63,12 +61,16 @@ write.table(neg_expression$hgnc_symbol,file='transcription_genes_neg_logfold_all
 #writing tables => for methylation 622 significant genes
 write.table(significant_p_values$Gene,file='methylation_genes.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
 length(unique(significant_p_values$Gene)) #348
+length(significant_p_values$Gene) #622
 dim(significant_p_values)
 pos_logfold<- significant_p_values[significant_p_values$logFC >= 2,]
 length(unique(pos_logfold$Gene)) # 250
 # this means higher expression in the tumor samples
 neg_logfold<- significant_p_values[significant_p_values$logFC <= (-2),]
 length(unique(neg_logfold$Gene)) # 104
+unique(neg_logfold$Gene)[unique(neg_logfold$Gene)%in%unique(pos_logfold$Gene)]
+significant_p_values[significant_p_values$Gene=='SCT',]
+
 # this means higher expression in the control samples
 write.table(pos_logfold$Gene,file='methylation_genes_pos_logfold.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
 write.table(neg_logfold$Gene,file='methylation_genes_neg_logfold.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
@@ -92,7 +94,6 @@ LIMMAout_annot_prom_all <- adj_pvalues[grepl("TSS",adj_pvalues$Feature) | (adj_p
 length(unique(LIMMAout_annot_prom_all$Gene)) # 2100 
 head(LIMMAout_annot_prom_all)
 
-
 positive_methylation_promotor <- LIMMAout_annot_prom_all[LIMMAout_annot_prom_all$logFC > 0,]
 negative_methylation_promotor <- LIMMAout_annot_prom_all[LIMMAout_annot_prom_all$logFC < 0,]
 
@@ -105,10 +106,15 @@ length(unique(negative_methylation_promotor$Gene)) # 999
 sum(unique(positive_methylation_promotor$Gene)%in%unique(neg_expression$hgnc_symbol)) # 125
 sum(unique(positive_methylation_promotor$Gene)%in%unique(pos_expression$hgnc_symbol)) # 63
 
+test_1 <- unique(positive_methylation_promotor$Gene)[unique(positive_methylation_promotor$Gene)%in%unique(neg_expression$hgnc_symbol)] # 125
+write.table(test_1,file='methylation_promotor_test1.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
+
 # => more methylation in normal promotor
 sum(unique(negative_methylation_promotor$Gene)%in%unique(neg_expression$hgnc_symbol)) # 49
 sum(unique(negative_methylation_promotor$Gene)%in%unique(pos_expression$hgnc_symbol)) # 119
 
+test_2 <- unique(negative_methylation_promotor$Gene)[unique(negative_methylation_promotor$Gene)%in%unique(pos_expression$hgnc_symbol)] # 119
+write.table(test_2,file='methylation_promotor_test2.txt',row.names=FALSE,quote=FALSE,col.names=FALSE)
 
 # Gene Set Enrichment Analysis with the overlapping genes between microarray and the methylation
 length(unique(adj_pvalues$Gene)) # 5917 methylation
